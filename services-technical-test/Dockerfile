@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Exposer le port sur lequel votre application React s'exécute (par défaut : 3000)
-EXPOSE 3000
+EXPOSE 3001
 
 # Commande pour démarrer l'application lorsqu'un conteneur est lancé
 CMD ["npm", "start"]
