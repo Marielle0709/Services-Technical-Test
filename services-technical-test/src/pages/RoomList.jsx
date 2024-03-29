@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import Navbar from "../components/Navbar";
 
 const RoomList = () => {
   const [rooms, setRooms] = useState([]);
@@ -18,12 +19,12 @@ const RoomList = () => {
   }, []);
 
   const handleReservation = (roomId) => {
-    // Logique de réservation ici
     console.log(`Reserved room with ID ${roomId}`);
   };
 
   return (
-    <div className="row" style={{width:"90vw"}}>
+    <div className="row" style={{ width: "100%",margin:"0", height: "90vh" }}>
+      <Navbar />
       {rooms ? (
         rooms.map((room) => (
           <div key={room.id} className="col-lg-4 col-md-6 mb-4">
