@@ -1,11 +1,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { useNavigate} from 'react-router-dom';
 
 const RoomList = () => {
   const [rooms, setRooms] = useState([]);
+  const history = useNavigate();
 
   useEffect(() => {
+    if(localStorage.getItem("token")===null){
+      history('/');
+
+    }
     const fetchRooms = async () => {
       try {
         const response = await axios.get("http://localhost:3000/salles");
@@ -18,12 +24,24 @@ const RoomList = () => {
     fetchRooms();
   }, []);
 
-  const handleReservation = (roomId) => {
-    console.log(`Reserved room with ID ${roomId}`);
+  const handleReservation = async (roomId) => {
+    try {
+      // Envoyer une requête pour effectuer la réservation de la salle avec l'ID roomId
+      const response = await axios.post(`http://localhost:3000/reservations`, {
+        salleId: roomId,
+        date: new Date().toISOString(), // Exemple de date actuelle
+        montant: rooms.find(room => room.id === roomId).prix // Prix de la salle
+      });
+      
+      // Afficher un message de succès ou effectuer d'autres actions nécessaires
+      console.log("Réservation effectuée avec succès:", response.data);
+    } catch (error) {
+      console.error("Error reserving room:", error);
+    }
   };
 
   return (
-    <div className="row" style={{ width: "100%",margin:"0", height: "90vh" }}>
+    <div className="row" style={{ width: "100%", margin: "0", height: "90vh" }}>
       <Navbar />
       {rooms ? (
         rooms.map((room) => (

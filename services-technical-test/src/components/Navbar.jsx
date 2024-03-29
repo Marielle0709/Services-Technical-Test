@@ -1,27 +1,36 @@
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.clear(); 
+    navigate('/'); 
+  };
+
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark" style={{height:"10%"}}>
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark" style={{ height: "10%" }}>
       <div className="container">
-        <a className="navbar-brand" href="#">Technical test</a>
+        <Link className="navbar-brand" to="/">Technical test</Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
         </button>
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <a className="nav-link active" aria-current="page" href="#">Accueil</a>
+              <Link className="nav-link" to="/" aria-current="page">Accueil</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="#">Services</a>
+              <Link className="nav-link" to="/services">Services</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="#">À propos</a>
+              <Link className="nav-link" to="/about">À propos</Link>
             </li>
             <li className="nav-item">
-              <a className="nav-link" href="#">Contact</a>
+              <Link className="nav-link" to="/contact">Contact</Link>
             </li>
           </ul>
+          <button className="btn btn-outline-light" onClick={handleLogout}>Déconnexion</button>
         </div>
       </div>
     </nav>
