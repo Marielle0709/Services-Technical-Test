@@ -4,13 +4,20 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
-
+const paypal = require('paypal-rest-sdk');
 const prisma = new PrismaClient();
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = 'votre_clé_secrète'; 
+// Configuration de PayPal
+paypal.configure({
+    mode: 'sandbox', // Changez en 'live' pour une utilisation en production
+    client_id: 'VOTRE_CLIENT_ID_PAYPAL',
+    client_secret: 'VOTRE_SECRET_PAYPAL'
+  });
 app.use(express.json());
-
+app.use(cors()); 
 // Définition des options Swagger
 const options = {
     definition: {
@@ -170,10 +177,13 @@ app.get('/utilisateurs/:id', async (req, res) => {
  *                 type: integer
  *               idUtilisateur:
  *                 type: integer
+ *               prix:
+ *                 type: integer
  *             example:
  *               nom: "Salle A"
  *               numero: 1
  *               idUtilisateur: 1
+ *               prix: 100
  *     responses:
  *       201:
  *         description: Salle ajoutée avec succès
@@ -181,14 +191,15 @@ app.get('/utilisateurs/:id', async (req, res) => {
  *         description: Erreur lors de l'ajout de la salle
  */
 app.post('/salles', async (req, res) => {
-    const { nom, numero, idUtilisateur } = req.body;
+    const { nom, numero, idUtilisateur,prix } = req.body;
 
     try {
         const nouvelleSalle = await prisma.salle.create({
             data: {
                 nom,
                 numero,
-                idUtilisateur
+                idUtilisateur,
+                prix
             }
         });
         res.status(201).json(nouvelleSalle);
@@ -246,10 +257,14 @@ app.get('/salles', async (req, res) => {
  *                 type: integer
  *               idUtilisateur:
  *                 type: integer
+ *               prix:
+ *                 type: integer
  *             example:
  *               nom: "Nouveau nom de salle"
  *               numero: 3
  *               idUtilisateur: 2
+ *               prix: 100
+ * 
  *     responses:
  *       200:
  *         description: Salle mise à jour avec succès
@@ -260,7 +275,7 @@ app.get('/salles', async (req, res) => {
  */
 app.put('/salles/:id', async (req, res) => {
     const { id } = req.params;
-    const { nom, numero, idUtilisateur } = req.body;
+    const { nom, numero, idUtilisateur,prix } = req.body;
 
     try {
         const salleMiseAJour = await prisma.salle.update({
@@ -268,7 +283,8 @@ app.put('/salles/:id', async (req, res) => {
             data: {
                 nom,
                 numero,
-                idUtilisateur
+                idUtilisateur,
+                prix
             }
         });
         res.json(salleMiseAJour);
@@ -360,7 +376,150 @@ app.post('/login', async (req, res) => {
     res.json({ token });
 });
 
-
+/**
+ * @swagger
+ * /reservations:
+ *   post:
+ *     summary: Réserver une salle avec paiement PayPal
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               salleId:
+ *                 type: integer
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               montant:
+ *                 type: number
+ *             example:
+ *               salleId: 1
+ *               date: "2024-04-01T10:00:00Z"
+ *               montant: 100
+ *     responses:
+ *       200:
+ *         description: Réservation effectuée avec succès
+ *       400:
+ *         description: Erreur lors de la réservation
+ */
+app.post('/reservations', async (req, res) => {
+    const { salleId, date, montant } = req.body;
+  
+    // Création d'une URL de retour pour PayPal
+    const returnUrl = 'http://votre-site.com/confirmation-paypal';
+    // Création d'une URL d'annulation pour PayPal
+    const cancelUrl = 'http://votre-site.com/annulation-paypal';
+  
+    const paypalPayment = {
+      intent: 'sale',
+      payer: {
+        payment_method: 'paypal'
+      },
+      redirect_urls: {
+        return_url: returnUrl,
+        cancel_url: cancelUrl
+      },
+      transactions: [{
+        item_list: {
+          items: [{
+            name: 'Réservation de salle',
+            sku: 'salle_001',
+            price: montant.toFixed(2),
+            currency: 'EUR',
+            quantity: 1
+          }]
+        },
+        amount: {
+          total: montant.toFixed(2),
+          currency: 'EUR'
+        },
+        description: 'Réservation de salle pour la date spécifiée'
+      }]
+    };
+  
+    try {
+      paypal.payment.create(paypalPayment, function (error, payment) {
+        if (error) {
+          console.error(error);
+          res.status(400).json({ error: 'Erreur lors de la création du paiement PayPal' });
+        } else {
+          // Rediriger vers l'URL de paiement PayPal
+          for (let i = 0; i < payment.links.length; i++) {
+            if (payment.links[i].rel === 'approval_url') {
+              res.status(200).json({ approval_url: payment.links[i].href });
+              break;
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: 'Erreur lors de la réservation' });
+    }
+  });
+  
+  /**
+   * @swagger
+   * /confirmation-paypal:
+   *   get:
+   *     summary: Confirmation du paiement PayPal
+   *     parameters:
+   *       - in: query
+   *         name: paymentId
+   *         required: true
+   *         description: ID du paiement PayPal
+   *         schema:
+   *           type: string
+   *       - in: query
+   *         name: token
+   *         required: true
+   *         description: Token de paiement PayPal
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Paiement confirmé avec succès
+   *       400:
+   *         description: Erreur lors de la confirmation du paiement
+   */
+  app.get('/confirmation-paypal', async (req, res) => {
+    const { paymentId, token } = req.query;
+    
+    const execute_payment_json = {
+      payer_id: req.query.PayerID
+    };
+  
+    try {
+      paypal.payment.execute(paymentId, execute_payment_json, async function (error, payment) {
+        if (error) {
+          console.error(error);
+          res.status(400).json({ error: 'Erreur lors de l\'exécution du paiement PayPal' });
+        } else {
+          // Logique de confirmation de la réservation ici
+          res.status(200).json({ message: 'Paiement confirmé avec succès' });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ error: 'Erreur lors de la confirmation du paiement' });
+    }
+  });
+  
+  /**
+   * @swagger
+   * /annulation-paypal:
+   *   get:
+   *     summary: Annulation du paiement PayPal
+   *     responses:
+   *       200:
+   *         description: Paiement annulé avec succès
+   */
+  app.get('/annulation-paypal', async (req, res) => {
+    res.status(200).json({ message: 'Paiement annulé avec succès' });
+  });
 
 
 

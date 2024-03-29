@@ -18,6 +18,7 @@ model Salle {
   nom           String
   numero        Int
   idUtilisateur Int?
+  prix          Int?
   reserve       Boolean      @default(false)
   utilisateur   Utilisateur? @relation(fields: [idUtilisateur], references: [id])
 }
