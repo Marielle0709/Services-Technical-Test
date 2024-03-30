@@ -19,4 +19,4 @@ RUN npm run build
 EXPOSE 3001
 
 # Commande pour démarrer l'application lorsqu'un conteneur est lancé
-CMD ["npm", "start"]
+CMD ["npm", "run","dev"]

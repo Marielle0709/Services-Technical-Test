@@ -7,6 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installer les dépendances
+RUN npm cache clean
 RUN npm install
 
 # Copier les fichiers du projet dans le répertoire de travail

@@ -27,7 +27,7 @@ Bienvenue dans l'application frontend . Cette application est construite avec Re
 
 ## Démarrer l'application en mode développement :
     bash
-    npm start
+    npm run dev
     Cela lancera l'application sur http://localhost:3001.
 
 ## Composants React
@@ -38,13 +38,6 @@ Bienvenue dans l'application frontend . Cette application est construite avec Re
 
     Assurez-vous que le backend est en cours d'exécution à l'adresse spécifiée dans le fichier .env. Par défaut, l'application frontend suppose que le backend est accessible sur http://localhost:3000.# Getting Started with Create React App
 
-  
-## builder le projet avec maven
-    mvn clean install
-
-Étape 1: Construire l'image Docker
-
-Placez le Dockerfile dans le répertoire racine de votre projet React. Ensuite, ouvrez un terminal et exécutez la commande suivante dans le répertoire où se trouve votre Dockerfile :
 
 bash
 ## lancer avec Docker
