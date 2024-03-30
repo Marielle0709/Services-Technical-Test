@@ -11,7 +11,6 @@ RUN npm install
 
 # Copier les fichiers du projet dans le répertoire de travail
 RUN npx prisma generate
-RUN npx prisma format
 RUN npx prisma migrate
 
 # Copier les fichiers du projet dans le répertoire de travail
