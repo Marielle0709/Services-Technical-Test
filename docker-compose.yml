@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  database:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: ""
+      MYSQL_DB: "services-test"
+
+  frontend:
+    build:
+      context: ./services-technical-test
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - app
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    depends_on:
+      - database
